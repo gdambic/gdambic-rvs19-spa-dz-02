@@ -20,7 +20,7 @@ int main()
 				window.close();
 		}
 
-		if (sat.getElapsedTime() >= seconds(0.2)) {
+		if (sat.getElapsedTime() >= seconds(2)) {
 			window.clear();
 			igra.simulacija();
 			window.display();
