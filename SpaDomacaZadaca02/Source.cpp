@@ -1,11 +1,16 @@
 #include <SFML/Graphics.hpp>
+#include "IgraZivota.h"
 
 int main()
 {
+	bool prvi = true;
 	sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, SFML world!");
 	window.setFramerateLimit(60);
-	//Cvijet cvijet(&window);
-
+	IgraZivota igra(&window);
+	Clock sat;
+	igra.draw(sat);
+	window.display();
+	
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -15,9 +20,12 @@ int main()
 				window.close();
 		}
 
-		window.clear();
-		//cvijet.draw();
-		window.display();
+		if (sat.getElapsedTime() >= seconds(0.2)) {
+			window.clear();
+			igra.simulacija();
+			window.display();
+			sat.restart();
+		}
 	}
 
 	return 0;
