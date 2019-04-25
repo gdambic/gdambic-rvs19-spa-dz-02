@@ -2,6 +2,8 @@
 
 STRELICE ili W/A/S/D - povećavajte/smanjujte površinu
 
+LIJEVI KLIK - promjeni stanje u ćeliji
+
 Q - slijedeća generacija
 
 C - obriši sve ćelije s ekrana
