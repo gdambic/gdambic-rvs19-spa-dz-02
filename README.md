@@ -1,5 +1,9 @@
 # rvs19-spa-dz-02
 
+![GIF iz programa](https://media.giphy.com/media/ZYPSGg11ivq0gvjMI7/giphy.gif)
+
+#UPUTE:
+
 STRELICE ili W/A/S/D - povećavajte/smanjujte površinu
 
 LIJEVI KLIK - promjeni stanje u ćeliji
@@ -16,4 +20,3 @@ R - nasumično postavi ćelije
 
 SPACE - zaustavi/pokrenio automatsko mjenjanje generacija
 
-![GIF iz programa](https://media.giphy.com/media/ZYPSGg11ivq0gvjMI7/giphy.gif)
