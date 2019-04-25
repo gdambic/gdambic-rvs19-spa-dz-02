@@ -2,7 +2,7 @@
 
 ![GIF iz programa](https://media.giphy.com/media/ZYPSGg11ivq0gvjMI7/giphy.gif)
 
-#UPUTE:
+# UPUTE:
 
 STRELICE ili W/A/S/D - povećavajte/smanjujte površinu
 
