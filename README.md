@@ -8,7 +8,7 @@ STRELICE ili W/A/S/D - povećavajte/smanjujte površinu
 
 LIJEVI KLIK - promjeni stanje u ćeliji
 
-Q - slijedeća generacija
+Q - sljedeća generacija
 
 C - obriši sve ćelije s ekrana
 
@@ -18,5 +18,5 @@ R - nasumično postavi ćelije
 
 \- - uspori
 
-SPACE - zaustavi/pokrenio automatsko mjenjanje generacija
+SPACE - zaustavi/pokreni automatsko mijenjanje generacija
 
