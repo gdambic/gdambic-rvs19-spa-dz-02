@@ -11,6 +11,7 @@ using namespace std;
 
 class game_of_life {
 private:
+	sf::RenderWindow* window;
 	const int POMAK = 32;
 	int SIZE = 10;
 	int STUPACA=40;
@@ -22,9 +23,7 @@ private:
 	bool nova_celija(int i, int j);
 	int susjedi(int i, int j);
 	vector<sf::Vertex> DRAWS;
-
 public:
-	sf::RenderWindow* window;
 	game_of_life(sf::RenderWindow* window);
 	void reset();
 	void ocisti();
@@ -38,9 +37,6 @@ public:
 	void REDAKAdown();
 	void STUPACAup();
 	void STUPACAdown();
-
-
-
 };
 
 #endif

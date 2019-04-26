@@ -1,6 +1,7 @@
 #include "game_of_life.h"
 #include <ctime>
 #include <chrono>
+#include <array>
 using namespace std::chrono;
 
 bool game_of_life::slucajna_vrijednost()
@@ -91,10 +92,8 @@ void game_of_life::sljedeca_generacija()
 
 void game_of_life::iscrtaj()
 {
-	//auto begin = high_resolution_clock::now();
 	
 	//!!!ovo je bilo PRESPORO pa sam morao napraviti vertex!!!
-
 	/*for (int i = 0; i <= 1; ++i) {
 		for (int j = 0; j <= STUPACA+1; ++j) {
 			sf::RectangleShape celija(sf::Vector2f(SIZE, SIZE));
@@ -127,61 +126,60 @@ void game_of_life::iscrtaj()
 	sf::Color boja = sf::Color(0, 0, 255);
 
 	//gornji rub
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, POMAK), boja, sf::Vector2f(0, 0)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, POMAK + SIZE), boja, sf::Vector2f(0, SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * (STUPACA + 2), POMAK + SIZE), boja, sf::Vector2f(SIZE*(STUPACA+2), SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * (STUPACA + 2), POMAK), boja, sf::Vector2f(SIZE*(STUPACA + 2), 0)));
+	DRAWS.emplace_back(sf::Vector2f(0, POMAK), boja);
+	DRAWS.emplace_back(sf::Vector2f(0, POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * (STUPACA + 2), POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * (STUPACA + 2), POMAK), boja);
 
 	//donji rub
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, (REDAKA+1)*SIZE + POMAK), boja, sf::Vector2f(0, 0)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, (REDAKA + 1)*SIZE + POMAK + SIZE), boja, sf::Vector2f(0, SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * (STUPACA + 2), (REDAKA + 1)*SIZE + POMAK + SIZE), boja, sf::Vector2f(SIZE*(STUPACA + 2), SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * (STUPACA + 2), (REDAKA + 1)*SIZE + POMAK), boja, sf::Vector2f(SIZE*(STUPACA + 2), 0)));
+	DRAWS.emplace_back(sf::Vector2f(0, (REDAKA+1)*SIZE + POMAK), boja);
+	DRAWS.emplace_back(sf::Vector2f(0, (REDAKA + 1)*SIZE + POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * (STUPACA + 2), (REDAKA + 1)*SIZE + POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * (STUPACA + 2), (REDAKA + 1)*SIZE + POMAK), boja);
 
 	//lijevi rub
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, POMAK + SIZE), boja, sf::Vector2f(0, 0)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(0, POMAK + SIZE + SIZE * REDAKA), boja, sf::Vector2f(0, SIZE*REDAKA)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE, POMAK + SIZE + SIZE * REDAKA), boja, sf::Vector2f(SIZE, SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE, POMAK + SIZE), boja, sf::Vector2f(SIZE*REDAKA, 0)));
+	DRAWS.emplace_back(sf::Vector2f(0, POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(0, POMAK + SIZE + SIZE * REDAKA), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE, POMAK + SIZE + SIZE * REDAKA), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE, POMAK + SIZE), boja);
 
 	//desni rub
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * STUPACA + SIZE, POMAK + SIZE), boja, sf::Vector2f(0, 0)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * STUPACA + SIZE, POMAK + SIZE + SIZE * REDAKA), boja, sf::Vector2f(0, SIZE*REDAKA)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * STUPACA + SIZE*2, POMAK + SIZE + SIZE * REDAKA), boja, sf::Vector2f(SIZE, SIZE)));
-	DRAWS.push_back(sf::Vertex(sf::Vector2f(SIZE * STUPACA + SIZE*2, POMAK + SIZE), boja, sf::Vector2f(SIZE*REDAKA, 0)));
+	DRAWS.emplace_back(sf::Vector2f(SIZE * STUPACA + SIZE, POMAK + SIZE), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * STUPACA + SIZE, POMAK + SIZE + SIZE * REDAKA), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * STUPACA + SIZE*2, POMAK + SIZE + SIZE * REDAKA), boja);
+	DRAWS.emplace_back(sf::Vector2f(SIZE * STUPACA + SIZE*2, POMAK + SIZE), boja);
 
+	boja = sf::Color(255, 0, 0);
+	//auto begin = high_resolution_clock::now();
 	for (int i = 0; i < REDAKA; ++i) {
 		for (int j = 0; j < STUPACA; ++j) {
 			if (!_generacija[i][j])
 				continue;
-			boja = _generacija[i][j] ? sf::Color(255, 0, 0) : sf::Color(0, 0, 0);
-			DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE), boja, sf::Vector2f(0, 0)));
-			DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE * 2), boja, sf::Vector2f(0, SIZE)));
-			DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE * 2), boja, sf::Vector2f(SIZE, SIZE)));
-			DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE), boja, sf::Vector2f(SIZE, 0)));
+			DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE), boja);
+			DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE * 2), boja);
+			DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE * 2), boja);
+			DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE), boja);
 		}
 	}
+	//auto end = high_resolution_clock::now();
 	sf::Vector2i position = sf::Mouse::getPosition(*window);
 	int i = (position.y - POMAK - SIZE) / SIZE;
 	int j = (position.x - SIZE) / SIZE;
 	if (!(j < 0 || j >= STUPACA) && !(i < 0 || i >= REDAKA) && position.y - POMAK - SIZE> 0 && position.x - SIZE > 0) {
-		if (_generacija[i][j]) {
-			boja = sf::Color(140, 0, 0);
-		}
-		else {
-			boja = sf::Color(70, 70, 70);
-		}
-		DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE), boja, sf::Vector2f(0, 0)));
-		DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE * 2), boja, sf::Vector2f(0, SIZE)));
-		DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE * 2), boja, sf::Vector2f(SIZE, SIZE)));
-		DRAWS.push_back(sf::Vertex(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE), boja, sf::Vector2f(SIZE, 0)));
+		boja = _generacija[i][j] ? boja = sf::Color(140, 0, 0) : boja = sf::Color(70, 70, 70);
+
+		DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE), boja);
+		DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE, POMAK + SIZE * i + SIZE * 2), boja);
+		DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE * 2), boja);
+		DRAWS.emplace_back(sf::Vector2f(j*SIZE + SIZE * 2, POMAK + SIZE * i + SIZE), boja);
 	}
-
-
+	
+	
 	window->draw(&DRAWS[0], DRAWS.size(), sf::Quads);
+	
 	DRAWS.clear();
-	//auto end = high_resolution_clock::now();
-	//cout << "Traje " << duration_cast<microseconds>(end - begin).count() << " microsekundi." << endl;
+	
+	//cout << "Traje " << duration_cast<microseconds>(end - begin).count() << " microsekundi. " << endl;
 }
 
 void game_of_life::REDAKAup()
