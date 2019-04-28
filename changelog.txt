@@ -1,0 +1,5 @@
+Verzija 1.1
++dodana mogucnost biranja rezolucije prozora
++dodana mogucnost biranja boje mrtvih i zivih celija
++dodan changelog
+~stvaranje celija sada je user-friendly, a ne hardkodirano 
