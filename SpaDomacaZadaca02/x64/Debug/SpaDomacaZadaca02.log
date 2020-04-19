@@ -1,0 +1,26 @@
+﻿  Grid.cpp
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Grid.cpp(6,46): warning C4244: 'argument': conversion from 'const int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Grid.cpp(6,40): warning C4244: 'argument': conversion from 'const int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Grid.cpp(36,60): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Grid.cpp(36,50): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Grid.cpp(57,37): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Source.cpp
+D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\SpaDomacaZadaca02\Source.cpp(59,22): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+  SpaDomacaZadaca02.vcxproj -> D:\Algebra Software Engineering\SPA\DZ\SPA domaća zadaća 02\gdambic-rvs19-spa-dz-02-master\x64\Debug\SpaDomacaZadaca02.exe
