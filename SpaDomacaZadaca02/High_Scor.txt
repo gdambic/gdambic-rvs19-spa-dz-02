@@ -1,0 +1,4 @@
+High Scor:
+Live:928	 Dead:1572
+Born:541	   Died:238
+	Live for:4sec
