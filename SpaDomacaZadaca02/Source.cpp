@@ -1,10 +1,12 @@
 #include <SFML/Graphics.hpp>
+#include<iostream>
+#include"Gofl.h"
 
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, SFML world!");
 	window.setFramerateLimit(60);
-	//Cvijet cvijet(&window);
+	Gofl gofl(&window);
 
 	while (window.isOpen())
 	{
@@ -16,7 +18,7 @@ int main()
 		}
 
 		window.clear();
-		//cvijet.draw();
+		gofl.draw();
 		window.display();
 	}
 
