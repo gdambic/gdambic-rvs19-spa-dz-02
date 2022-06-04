@@ -18,5 +18,40 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameOfLife.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameOfLife.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="1-Key.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="2-Key.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="3-Key.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Esc-Key.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="dogicapixel.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="world_a.txt" />
+    <Text Include="world_b.txt" />
   </ItemGroup>
 </Project>
