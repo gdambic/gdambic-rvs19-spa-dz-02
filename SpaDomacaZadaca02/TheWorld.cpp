@@ -3,6 +3,7 @@
 
 #include <random>
 #include <vector>
+#include <math.h>
 
 TheWorld::TheWorld()
 {
@@ -16,7 +17,7 @@ TheWorld::TheWorld()
 	{
 		for (size_t x = 0; x < chunk_size; x++)
 		{
-			if (random_gen() % 4 == 1) {
+			if (random_gen() % 4 == 3) {
 				chunks.front().write_at(x, y, true);
 			}
 		}
@@ -41,7 +42,7 @@ void TheWorld::do_tick()
 	{
 		chunk.tick_prepare();
 		
-		if (chunk.has_things()) {
+		if (chunk.has_things() && abs(chunk.get_position_x()) < INT_MAX - 1000 && abs(chunk.get_position_y()) < INT_MAX - 1000) {
 			int check = chunk.get_missing_neighbour();
 			while (check != 0) {
 				switch (check) {
@@ -76,6 +77,8 @@ void TheWorld::do_tick()
 		if (it->should_terminate())
 		{
 			it = chunks.erase(it);
+			if (it == chunks.end())
+				break;
 		}
 	}
 }
@@ -93,13 +96,15 @@ void TheWorld::draw(sf::RenderWindow& window)
 		return;
 	}
 
-	//How big should our texture be?
-	for (auto& chunk : chunks)
+	if (show_chunks)
 	{
-		int pos_x = chunk.get_position_x() * chunk_size;
-		int pos_y = chunk.get_position_y() * chunk_size;
-		surround_rectangle.setPosition(pos_x, pos_y);
-		window.draw(surround_rectangle);
+		for (auto& chunk : chunks)
+		{
+			int pos_x = chunk.get_position_x() * chunk_size;
+			int pos_y = chunk.get_position_y() * chunk_size;
+			surround_rectangle.setPosition(pos_x, pos_y);
+			window.draw(surround_rectangle);
+		}
 	}
 
 	for (auto& chunk : chunks)
@@ -118,4 +123,68 @@ void TheWorld::draw(sf::RenderWindow& window)
 			}
 		}
 	}
+}
+
+void TheWorld::rebuild()
+{
+	while (!chunks.empty()) {
+		chunks.pop_back();
+	}
+	
+	for (size_t y = 0; y < chunks_to_start_with; y++)
+	{
+		for (size_t x = 0; x < chunks_to_start_with; x++)
+		{
+			chunks.emplace_back(x, y, *this);
+		}
+	}
+
+	for (auto& chunk : chunks)
+	{
+		for (size_t y = 0; y < chunk_size; y++)
+		{
+			for (size_t x = 0; x < chunk_size; x++)
+			{
+				if (random_gen() % 4 == 3) {
+					chunk.write_at(x, y, true);
+				}
+			}
+		}
+	}
+}
+
+void TheWorld::toggle_show_chunks()
+{
+	show_chunks = !show_chunks;
+}
+
+void TheWorld::set_dot(int x, int y, bool state)
+{
+	int chunk_locate_x = x;
+	int chunk_locate_y = y;
+
+	if (chunk_locate_x < 0) {
+		chunk_locate_x -= chunk_size;
+	}
+	if (chunk_locate_y < 0) {
+		chunk_locate_y -= chunk_size;
+	}
+
+	chunk_locate_x /= chunk_size;
+	chunk_locate_y /= chunk_size;
+
+	std::cout << "START" << chunk_locate_x << ", " << chunk_locate_y << std::endl;
+	
+	std::cout << chunk_locate_x << ", " << chunk_locate_y << std::endl;
+
+	for (auto& chunk : chunks)
+	{
+		if (chunk.get_position_x() == chunk_locate_x && chunk.get_position_y() == chunk_locate_y) {
+			chunk.write_direct(x - chunk_locate_x * chunk_size, y - chunk_locate_y * chunk_size, state);
+			return;
+		}
+	}
+
+	chunks.emplace_back(chunk_locate_x, chunk_locate_y, *this);
+	chunks.back().write_direct(x - chunk_locate_x * chunk_size, y - chunk_locate_y * chunk_size, state);
 }

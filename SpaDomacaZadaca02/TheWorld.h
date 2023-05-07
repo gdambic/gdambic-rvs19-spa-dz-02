@@ -27,6 +27,9 @@ private:
 //	sf::Sound tock;
 //	sf::Music music;//vivaldi four seasons? Time-themed so it's fitting.
 
+	//Settings, can be changed from main
+	bool show_chunks = false;
+
 	//The cooler random
 	std::mt19937 random_gen;
 
@@ -64,7 +67,7 @@ private:
 		//Buffer container for the next "step"
 		//std::array<bool, chunk_size* chunk_size> next_container{ 0 };
 
-		//Using std::array, std::vector, or anything else just bricks everything. Am I tripping? It shouldn't be that bad. No way no how.
+		//Using std::array, std::vector, or anything else just bricks everything. Am I tripping? It shouldn't be that bad. No way no how. And yet it is. Wild.
 		bool* current_container = nullptr;
 		bool* next_container = nullptr;
 	public:
@@ -94,6 +97,11 @@ private:
 					num_things--;
 				}
 			}
+		}
+
+		void write_direct(int x, int y, bool status) {
+			write_at(x, y, status);
+			current_container[chunk_size * y + x] = status;
 		}
 
 		bool should_terminate() {
@@ -545,8 +553,12 @@ private:
 	std::list<Chunk> chunks;
 
 public:
+	size_t chunks_to_start_with = 1;
 	TheWorld();
 	void do_tick();
 	void draw(sf::RenderWindow& window);
+	void rebuild();
+	void toggle_show_chunks();
+	void set_dot(int x, int y, bool state);
 };
 

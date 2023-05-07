@@ -5,7 +5,7 @@
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, life!");
+	sf::RenderWindow window(sf::VideoMode(800, 600), "1P Conway's Game of Life");
 	window.setFramerateLimit(60);
 
 	sf::View view;
@@ -24,17 +24,30 @@ int main()
 
 	TheWorld world;
 	bool simulating = true;
-	bool curr_press = false;
-	int REMOVEME = 0;
+	int key_cooldown = 0;
+	int standard_key_cooldown = 5;
+
+	int simulation_counter = 0;
+	int simulation_time = 120;
+
+	std::cout << "Welcome to Conway's Game of Life." << std::endl;
+	std::cout << "You can move using your mouse's scrollwheel, and you can place dots by left clicking or remove them by right clicking." << std::endl;
+	std::cout << "You can use ESC to pause, LR arrows to control time, UD arrows and SPACE to regenerate the tiles, ENTER to show chunk data." << std::endl;
 
 	while (window.isOpen())
 	{
-		REMOVEME++;
-		if (REMOVEME > 0) {//default 120
-			REMOVEME = 0;
+		simulation_counter++;
+		if (simulation_counter > simulation_time) {
+			simulation_counter = 0;
 			if(simulating)
 				world.do_tick();
 		}
+
+		if (key_cooldown > 0) {
+			key_cooldown--;
+		}
+
+		//world.set_dot(key_cooldown, key_cooldown, true);
 
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -42,14 +55,74 @@ int main()
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)){
-				curr_press = !curr_press;
-				if (curr_press)
-					continue;
-				std::cout << "ESC pressed." << std::endl;
-				simulating = !simulating;
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+				sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+				sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+				world.set_dot(worldPos.x, worldPos.y, true);
+
+				std::cout << "(Experimental) LMB pressed at " << worldPos.x << ", " << worldPos.y << "." << std::endl;
+			}
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+				sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+				sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+				world.set_dot(worldPos.x, worldPos.y, false);
+
+				std::cout << "(Experimental) RMB pressed at " << worldPos.x << ", " << worldPos.y << "." << std::endl;
 			}
 
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)){
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					std::cout << "ESC pressed." << std::endl;
+					simulating = !simulating;
+				}
+			}
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					world.chunks_to_start_with++;
+					std::cout << "UP pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
+				}
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					world.chunks_to_start_with--;
+					std::cout << "DOWN pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
+				}
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					std::cout << "SPACE pressed. Rebuilding." << std::endl;
+					world.rebuild();
+				}
+			}
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					simulation_time += 10;
+					std::cout << "RIGHT pressed. Sim time is " << simulation_time << '.' << std::endl;
+				}
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					if (simulation_time > 0)
+						simulation_time -= 10;
+					std::cout << "LEFT pressed. Sim time is " << simulation_time << '.' << std::endl;
+				}
+			}
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter)) {
+				if (!(key_cooldown > 0)) {
+					key_cooldown = standard_key_cooldown;
+					std::cout << "ENTER pressed. Toggling chunk visibility." << std::endl;
+					world.toggle_show_chunks();
+				}
+			}
 
 			if (event.type == sf::Event::MouseWheelScrolled) {
 				float last_zoom = zoom;
@@ -89,8 +162,7 @@ int main()
 
 		view.setSize(window.getSize().x, window.getSize().y);
 		view.zoom(zoom);
-		view.setCenter(default_view_center_x + offset_x,
-			default_view_center_y + offset_y);
+		view.setCenter(default_view_center_x + offset_x, default_view_center_y + offset_y);
 		window.setView(view);
 
 		/*circle.setPosition(50, 50);
