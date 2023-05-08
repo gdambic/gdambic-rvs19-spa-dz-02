@@ -36,7 +36,6 @@ private:
 	sf::Texture output_texture;
 	sf::Sprite output;
 
-	sf::RectangleShape default_rectangle;
 	sf::RectangleShape surround_rectangle;
 
 	static const int chunk_size = 100;//100 default

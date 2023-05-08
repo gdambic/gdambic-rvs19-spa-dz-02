@@ -1,11 +1,13 @@
 #include <SFML/Graphics.hpp>
+
 #include <iostream>
+#include <math.h>
 
 #include "TheWorld.h"
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 600), "1P Conway's Game of Life");
+	sf::RenderWindow window(sf::VideoMode(800, 600), "1-Player Conway's Game of Life");
 	window.setFramerateLimit(60);
 
 	sf::View view;
@@ -16,27 +18,34 @@ int main()
 	sf::CircleShape circle;
 	circle.setRadius(5);
 
-	float default_view_center_x = view.getCenter().x;
-	float default_view_center_y = view.getCenter().y;
+	//float default_view_center_x = view.getCenter().x;
+	//float default_view_center_y = view.getCenter().y;
+	float default_view_center_x = 50;
+	float default_view_center_y = 50;
 	float offset_x = 0;
 	float offset_y = 0;
-	float zoom = 1;
+	//float zoom = 1;
+	float zoom = 0.5;
 
 	TheWorld world;
 	bool simulating = true;
 	int key_cooldown = 0;
-	int standard_key_cooldown = 5;
+	int standard_key_cooldown = 10;
 
 	int simulation_counter = 0;
 	int simulation_time = 120;
 
 	std::cout << "Welcome to Conway's Game of Life." << std::endl;
-	std::cout << "You can move using your mouse's scrollwheel, and you can place dots by left clicking or remove them by right clicking." << std::endl;
-	std::cout << "You can use ESC to pause, LR arrows to control time, UD arrows and SPACE to regenerate the tiles, ENTER to show chunk data." << std::endl;
+	std::cout << "You can move using your mouse's ScrollWheel, and by holding Crtl or Shift and using the ScrollWheel." << std::endl;
+	std::cout << "You can place dots by LeftClicking or remove them by RightClicking." << std::endl;
+	std::cout << "You can use Left and Right arrows to control processing time. Space is used to pause the simulation." << std::endl;
+	std::cout << "Up and Down arrows control how many chunks regeneration will create. You can trigger it by pressing BackSpace." << std::endl;
+	std::cout << "Hitting Enter will display chunk data." << std::endl;
+	std::cout << "Escape ends the program." << std::endl;
 
 	while (window.isOpen())
 	{
-		simulation_counter++;
+		simulation_counter++;//TODO: make time-dependant, not frame dependant
 		if (simulation_counter > simulation_time) {
 			simulation_counter = 0;
 			if(simulating)
@@ -58,82 +67,100 @@ int main()
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
 				sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
 				sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
-				world.set_dot(worldPos.x, worldPos.y, true);
+				world.set_dot(std::floor(worldPos.x), std::floor(worldPos.y), true);
 
 				std::cout << "(Experimental) LMB pressed at " << worldPos.x << ", " << worldPos.y << "." << std::endl;
 			}
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
 				sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
 				sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
-				world.set_dot(worldPos.x, worldPos.y, false);
+				world.set_dot(std::floor(worldPos.x), std::floor(worldPos.y), false);
 
 				std::cout << "(Experimental) RMB pressed at " << worldPos.x << ", " << worldPos.y << "." << std::endl;
 			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)){
-				if (!(key_cooldown > 0)) {
+			//Keys with cooldown ahead
+			if (!(key_cooldown > 0)) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
 					key_cooldown = standard_key_cooldown;
-					std::cout << "ESC pressed." << std::endl;
-					simulating = !simulating;
+					std::cout << "ESC pressed. Exiting..." << std::endl;
+					exit(0);
 				}
-			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
-				if (!(key_cooldown > 0)) {
+				//Build order
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
 					key_cooldown = standard_key_cooldown;
 					world.chunks_to_start_with++;
 					std::cout << "UP pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
 				}
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
-				if (!(key_cooldown > 0)) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
 					key_cooldown = standard_key_cooldown;
 					world.chunks_to_start_with--;
 					std::cout << "DOWN pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
 				}
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-				if (!(key_cooldown > 0)) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Backspace)) {
 					key_cooldown = standard_key_cooldown;
-					std::cout << "SPACE pressed. Rebuilding." << std::endl;
+					std::cout << "BACKSPACE pressed. Rebuilding." << std::endl;
 					world.rebuild();
 				}
-			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
-				if (!(key_cooldown > 0)) {
+				//Time control
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
 					key_cooldown = standard_key_cooldown;
 					simulation_time += 10;
-					std::cout << "RIGHT pressed. Sim time is " << simulation_time << '.' << std::endl;
+					std::cout << "RIGHT pressed. Sim time is " << simulation_time << " frames." << std::endl;
 				}
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
-				if (!(key_cooldown > 0)) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
 					key_cooldown = standard_key_cooldown;
 					if (simulation_time > 0)
 						simulation_time -= 10;
-					std::cout << "LEFT pressed. Sim time is " << simulation_time << '.' << std::endl;
+					std::cout << "LEFT pressed. Sim time is " << simulation_time << " frames." << std::endl;
 				}
-			}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+					key_cooldown = standard_key_cooldown;
+					simulating = !simulating;
+					std::cout << "SPACE pressed. Pause toggled." << std::endl;
+				}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter)) {
-				if (!(key_cooldown > 0)) {
+
+				//Chunk control
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter)) {
 					key_cooldown = standard_key_cooldown;
 					std::cout << "ENTER pressed. Toggling chunk visibility." << std::endl;
 					world.toggle_show_chunks();
 				}
-			}
+			}//End of keys with cooldown
 
 			if (event.type == sf::Event::MouseWheelScrolled) {
+
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
+					if (event.mouseWheelScroll.delta > 0) {
+						offset_x += 50 * zoom;
+					}
+					else {
+						offset_x -= 50 * zoom;
+					}
+					continue;
+				}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)) {
+					if (event.mouseWheelScroll.delta > 0) {
+						offset_y -= 50 * zoom;
+					}
+					else {
+						offset_y += 50 * zoom;
+					}
+					continue;
+				}
+
 				float last_zoom = zoom;
 				if (event.mouseWheelScroll.delta > 0) {
-					if (zoom <= 0.05) {//too close
-						break;
+					if (zoom <= 0.15) {//too close
+						continue;
 					}
-					zoom -= 0.05;
+					zoom -= 0.10;
 				}
 				else {
-					zoom += 0.05;
+					zoom += 0.10;
 				}
 
 				//compiler will optimize (probably), very ugly

@@ -23,9 +23,6 @@ TheWorld::TheWorld()
 		}
 	}
 
-	default_rectangle.setFillColor(sf::Color::White);
-	default_rectangle.setSize(sf::Vector2f(1, 1));
-
 	surround_rectangle.setFillColor(sf::Color(0,0,0,0));
 	surround_rectangle.setOutlineColor(sf::Color::Cyan);
 	surround_rectangle.setOutlineThickness(1);
@@ -85,10 +82,6 @@ void TheWorld::do_tick()
 
 void TheWorld::draw(sf::RenderWindow& window)
 {
-	int min_x = INT_MAX;
-	int min_y = INT_MAX;
-	int max_x = INT_MIN;
-	int max_y = INT_MIN;
 
 	if (chunks.size() == 0)
 	{
@@ -107,22 +100,55 @@ void TheWorld::draw(sf::RenderWindow& window)
 		}
 	}
 
+	//PERFORMANCE YEAHHHHH, TAKE THAT, RECTANGLES
+	//About 3 times faster than rectangle drawing, also cool grid effect
+	sf::VertexArray points(sf::Quads);
+	sf::Vertex point(sf::Vector2f(0, 0), sf::Color::White);
+
+	float spacing = 0.1;
+
+	//sf::Vector2f worldMin = window.mapPixelToCoords(sf::Vector2i(window.getPosition().x, window.getPosition().y));
+	sf::Vector2f worldMin = window.mapPixelToCoords(sf::Vector2i(0, 0));
+	//sf::Vector2f worldMax = window.mapPixelToCoords(sf::Vector2i(window.getPosition().x + window.getSize().x, window.getPosition().y + window.getSize().y));
+	sf::Vector2f worldMax = window.mapPixelToCoords(sf::Vector2i(window.getSize().x, window.getSize().y));
+
+	worldMin.x = floor(worldMin.x / chunk_size);
+	worldMin.y = floor(worldMin.y / chunk_size);
+	worldMax.x = ceil(worldMax.x / chunk_size);
+	worldMax.y = ceil(worldMax.y / chunk_size);
+
 	for (auto& chunk : chunks)
 	{
+		if (!(chunk.get_position_x() >= worldMin.x && chunk.get_position_x() < worldMax.x && chunk.get_position_y() >= worldMin.y && chunk.get_position_y() < worldMax.y)) {
+			//std::cout << "World min: " << worldMin.x << ", " << worldMin.y << " | ";
+			//std::cout << "World max: " << worldMax.x << ", " << worldMax.y << std::endl;
+			continue;
+		}
+
 		int pos_x = chunk.get_position_x() * chunk_size;
 		int pos_y = chunk.get_position_y() * chunk_size;
+
 
 		for (int y = 0; y < chunk_size; y++)
 		{
 			for (int x = 0; x < chunk_size; x++)
 			{
 				if (chunk.get_at(x, y)) {
-					default_rectangle.setPosition(pos_x + x, pos_y + y);
-					window.draw(default_rectangle);
+					point.position = sf::Vector2f(pos_x + x + spacing, pos_y + y + spacing);
+					points.append(point);
+					point.position = sf::Vector2f(pos_x + x + 1 - spacing, pos_y + y + spacing);
+					points.append(point);
+					point.position = sf::Vector2f(pos_x + x + 1 - spacing, pos_y + y + 1 - spacing);
+					points.append(point);
+					point.position = sf::Vector2f(pos_x + x + spacing, pos_y + y + 1 - spacing);
+					points.append(point);
+					//default_rectangle.setPosition(pos_x + x, pos_y + y);
 				}
 			}
 		}
 	}
+
+	window.draw(points);
 }
 
 void TheWorld::rebuild()
@@ -164,9 +190,11 @@ void TheWorld::set_dot(int x, int y, bool state)
 	int chunk_locate_y = y;
 
 	if (chunk_locate_x < 0) {
+		//x -= 1;
 		chunk_locate_x -= chunk_size;
 	}
 	if (chunk_locate_y < 0) {
+		//y -= 1;
 		chunk_locate_y -= chunk_size;
 	}
 
