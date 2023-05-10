@@ -1,5 +1,12 @@
 #include "game_menu.h"
 #include "global.h"
+/*
+nemam volje da ovo komentiram, ali je u osnovi klasa koja upravlja i kreira menije
+da, mogao sam bolje napraviti. mogao sam includati da sadrži druge ekterne "feature" kao nasumicna generacija boja menia
+ali jednostavno nisam htjeo i u nekom trenutku sam bio isfrustriran jer neki featuri jednostavno nisu htjeli raditi
+
+tko god hoce ovo popraviti ima moj blagoslov
+*/
 game_menu::game_menu(float width, float height, std::string name_1, std::string name_2, std::string name_3, std::string name_4, bool centered)
 {
 	font.loadFromFile("courier.ttf");
