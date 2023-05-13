@@ -6,8 +6,9 @@
 using namespace std;
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, SFML world!");
-	window.setFramerateLimit(2);
+	sf::RenderWindow window(sf::VideoMode(800, 600), "Conways game of life");
+	window.setFramerateLimit(1);
+	sf::sleep(sf::Time(sf::seconds(1)));
 	cout << "Press 'c' to change colors! :D" << endl;
 	Grid grid(&window);
 	Cell cell(&window);
