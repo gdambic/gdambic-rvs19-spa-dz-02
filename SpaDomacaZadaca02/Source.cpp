@@ -1,24 +1,12 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
+#include "Game.h"
+/*to begin the program you need to click on sfml console and draw some shape after that press space you can also stop game by pressing on space and draw another 
+shape than press space to continue*/
 
-int main()
-{
-	sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, SFML world!");
-	window.setFramerateLimit(60);
-	//Cvijet cvijet(&window);
 
-	while (window.isOpen())
-	{
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-				window.close();
-		}
-
-		window.clear();
-		//cvijet.draw();
-		window.display();
-	}
-
+int main(int argc, char* argv[]) {
+	Game gameoflife;
+	gameoflife.run();
 	return 0;
 }
