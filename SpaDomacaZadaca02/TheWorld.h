@@ -29,9 +29,7 @@ private:
 
 	//Settings, can be changed from main
 	bool show_chunks = false;
-
-	//The cooler random
-	std::mt19937 random_gen;
+	int num_of_rebuild_chunks = 1;
 
 	sf::Texture output_texture;
 	sf::Sprite output;
@@ -39,11 +37,11 @@ private:
 	sf::RectangleShape surround_rectangle;
 
 	static const int chunk_size = 100;//100 default
+	static const int world_default_position = 15000;//100 default
 
 	//This was a horrible idea. I regret everything.
 	struct Chunk {
 	private:
-
 		int position_x = 0;
 		int position_y = 0;
 		//should not exceed 10,000 (w/ chunk size of 100)
@@ -61,15 +59,68 @@ private:
 		Chunk* bottom_right_neighbour = nullptr;
 		Chunk* bottom_left_neighbour = nullptr;
 
-		//Access these with array_name[100 * y + x]
-		//std::array<bool, chunk_size* chunk_size> current_container{ 0 };
-		//Buffer container for the next "step"
-		//std::array<bool, chunk_size* chunk_size> next_container{ 0 };
-
-		//Using std::array, std::vector, or anything else just bricks everything. Am I tripping? It shouldn't be that bad. No way no how. And yet it is. Wild.
+		//So you might be wondering: man, why do we have two of them? Well, you see, while we're running calculations we need somewhere to store changes without
+		//making the calculation confuse itself - we would be calculating for atoms which haven't been born / killed yet. So first we calculate stuff, and then later
+		//we sync them up - simple as.
 		bool* current_container = nullptr;
+		//Buffer container for the next step
 		bool* next_container = nullptr;
+		
+		//This will be a lot faster to draw than recalculating everything again every frame lol. Has to be cleared and rebuilt every time the user draws on it :(
+		//Defined in constructor
+		sf::Vertex white_point;
+		sf::VertexArray triangles;
+		sf::VertexArray points;
+
 	public:
+
+		void prepare_for_draw() {
+			triangles.clear();
+			points.clear();
+
+			if (!has_things()) {
+				return;
+			}
+
+			int pos_x = get_position_x() * chunk_size;
+			int pos_y = get_position_y() * chunk_size;
+
+			double square_spacing = 0.1;
+
+			//now we do the rest
+			for (size_t y = 0; y < chunk_size; y++) {
+				for (size_t x = 0; x < chunk_size; x++) {
+					if (get_current(x, y)) {
+						//Performance mode (big zoomout) uses these
+						white_point.position = sf::Vector2f(pos_x + x, pos_y + y);
+						points.append(white_point);
+
+						//Quads are not supported on some devices anymore, so we have to use triangles :(
+						white_point.position = sf::Vector2f(pos_x + x + square_spacing, pos_y + y + square_spacing);
+						triangles.append(white_point);
+						white_point.position = sf::Vector2f(pos_x + x + 1 - square_spacing, pos_y + y + square_spacing);
+						triangles.append(white_point);
+						white_point.position = sf::Vector2f(pos_x + x + 1 - square_spacing, pos_y + y + 1 - square_spacing);
+						triangles.append(white_point);
+
+						white_point.position = sf::Vector2f(pos_x + x + 1 - square_spacing, pos_y + y + 1 - square_spacing);
+						triangles.append(white_point);
+						white_point.position = sf::Vector2f(pos_x + x + square_spacing, pos_y + y + 1 - square_spacing);
+						triangles.append(white_point);
+						white_point.position = sf::Vector2f(pos_x + x + square_spacing, pos_y + y + square_spacing);
+						triangles.append(white_point);
+					}
+				}
+			}
+		}
+		void do_draw(sf::RenderWindow& window, bool cheap_draw) {
+			if (cheap_draw)	{
+				window.draw(points);
+				return;
+			}
+			window.draw(triangles);
+		}
+
 		int get_position_x() {
 			return position_x;
 		}
@@ -81,11 +132,11 @@ private:
 			return (num_things != 0);
 		}
 
-		bool get_at(int x, int y) {
-			return current_container[chunk_size * (y) + x];
+		bool get_current(int x, int y) {
+			return current_container[chunk_size * y + x];
 		}
 
-		void write_at(int x, int y, bool status){
+		void write_next(int x, int y, bool status){
 
 			if (next_container[chunk_size * y + x] != status) {
 				next_container[chunk_size * y + x] = status;
@@ -98,18 +149,22 @@ private:
 			}
 		}
 
-		void write_direct(int x, int y, bool status) {
-			write_at(x, y, status);
+		void write_direct(int x, int y, bool status, bool skip_draw = 0) {
+			write_next(x, y, status);
 			current_container[chunk_size * y + x] = status;
+
+			//EXPENSIVE!
+			if (skip_draw) return;
+			prepare_for_draw();
 		}
 
 		bool should_terminate() {
 			if (!has_things()) {
+				//We only need to check our direct neighbours, if we have a diagonal connection there will always only be one connection, which
+				//is not enough to create life.
+
 				if ((up_neighbour != nullptr && up_neighbour->has_things()) || (right_neighbour != nullptr && right_neighbour->has_things()) ||
-					(bottom_neighbour != nullptr && bottom_neighbour->has_things()) || (left_neighbour != nullptr && left_neighbour->has_things()) ||
-					(up_left_neighbour != nullptr && up_left_neighbour->has_things()) || (up_right_neighbour != nullptr && up_right_neighbour->has_things()) ||
-					(bottom_right_neighbour != nullptr && bottom_right_neighbour->has_things()) ||
-					(bottom_left_neighbour != nullptr && bottom_left_neighbour->has_things())) {
+					(bottom_neighbour != nullptr && bottom_neighbour->has_things()) || (left_neighbour != nullptr && left_neighbour->has_things())) {
 					return 0;
 				}
 				return 1;
@@ -146,7 +201,7 @@ private:
 				bottom_left_neighbour = chunk;
 				break;
 			default:
-				std::cout << "Unexpected behaviour in TheWorld::Chunk::add_neighbour (nonsense input)." << std::endl;
+				std::cout << "Unexpected behaviour in TheWorld::Chunk::add_neighbour (nonsense input: " << dir << ")." << std::endl;
 				exit(1);
 				break;
 			}
@@ -190,14 +245,14 @@ private:
 		}
 
 		void do_point_neighbour_logic(int x, int y, int neighbours) {
-			if (get_at(x, y)) {
+			if (get_current(x, y)) {
 				if (neighbours < 2 || neighbours > 3) {
-					write_at(x, y, false);
+					write_next(x, y, false);
 				}
 			}
 			else {
 				if (neighbours == 3) {
-					write_at(x, y, true);
+					write_next(x, y, true);
 				}
 			}
 		}
@@ -221,13 +276,13 @@ private:
 						do_up_left = false;
 						do_bottom_left = false;
 						if (left_neighbour != nullptr) {
-							if (left_neighbour->get_at(chunk_size - 1, y)) {
+							if (left_neighbour->get_current(chunk_size - 1, y)) {
 								neighbours++;
 							}
-							if (y != chunk_size - 1 && left_neighbour->get_at(chunk_size - 1, y + 1)) {
+							if (y != chunk_size - 1 && left_neighbour->get_current(chunk_size - 1, y + 1)) {
 								neighbours++;
 							}
-							if (y != 0 && left_neighbour->get_at(chunk_size - 1, y - 1)) {
+							if (y != 0 && left_neighbour->get_current(chunk_size - 1, y - 1)) {
 								neighbours++;
 							}
 						}
@@ -237,13 +292,13 @@ private:
 						do_up_right = false;
 						do_up_left = false;
 						if (up_neighbour != nullptr){
-							if (up_neighbour->get_at(x, chunk_size - 1)) {
+							if (up_neighbour->get_current(x, chunk_size - 1)) {
 								neighbours++;
 							}
-							if (x != chunk_size - 1 && up_neighbour->get_at(x + 1, chunk_size - 1)) {
+							if (x != chunk_size - 1 && up_neighbour->get_current(x + 1, chunk_size - 1)) {
 								neighbours++;
 							}
-							if (x != 0 && up_neighbour->get_at(x - 1, chunk_size - 1)) {
+							if (x != 0 && up_neighbour->get_current(x - 1, chunk_size - 1)) {
 								neighbours++;
 							}
 						}
@@ -253,13 +308,13 @@ private:
 						do_up_right = false;
 						do_bottom_right = false;
 						if (right_neighbour != nullptr) {
-							if (right_neighbour->get_at(0, y)) {
+							if (right_neighbour->get_current(0, y)) {
 								neighbours++;
 							}
-							if (y != chunk_size - 1 && right_neighbour->get_at(0, y + 1)) {
+							if (y != chunk_size - 1 && right_neighbour->get_current(0, y + 1)) {
 								neighbours++;
 							}
-							if (y != 0 && right_neighbour->get_at(0, y - 1)) {
+							if (y != 0 && right_neighbour->get_current(0, y - 1)) {
 								neighbours++;
 							}
 						}
@@ -269,35 +324,35 @@ private:
 						do_bottom_left = false;
 						do_bottom_right = false;
 						if (bottom_neighbour != nullptr) {
-							if (bottom_neighbour->get_at(x, 0)) {
+							if (bottom_neighbour->get_current(x, 0)) {
 								neighbours++;
 							}
-							if (x != chunk_size - 1 && bottom_neighbour->get_at(x + 1, 0)) {
+							if (x != chunk_size - 1 && bottom_neighbour->get_current(x + 1, 0)) {
 								neighbours++;
 							}
-							if (x!= 0 && bottom_neighbour->get_at(x - 1, 0)) {
+							if (x!= 0 && bottom_neighbour->get_current(x - 1, 0)) {
 								neighbours++;
 							}
 						}
 					}
 					//diagonal
 					if (x == 0 && y == 0) {
-						if (up_left_neighbour != nullptr && up_left_neighbour->get_at(chunk_size - 1, chunk_size - 1)) {
+						if (up_left_neighbour != nullptr && up_left_neighbour->get_current(chunk_size - 1, chunk_size - 1)) {
 							neighbours++;
 						}
 					}
 					if (x == chunk_size - 1 && y == 0) {
-						if (up_right_neighbour != nullptr && up_right_neighbour->get_at(0, chunk_size - 1)) {
+						if (up_right_neighbour != nullptr && up_right_neighbour->get_current(0, chunk_size - 1)) {
 							neighbours++;
 						}
 					}
 					if (x == chunk_size - 1 && y == chunk_size - 1) {
-						if (bottom_right_neighbour != nullptr && bottom_right_neighbour->get_at(0, 0)) {
+						if (bottom_right_neighbour != nullptr && bottom_right_neighbour->get_current(0, 0)) {
 							neighbours++;
 						}
 					}
 					if (x == 0 && y == chunk_size - 1) {
-						if (bottom_left_neighbour != nullptr && bottom_left_neighbour->get_at(chunk_size - 1, 0)) {
+						if (bottom_left_neighbour != nullptr && bottom_left_neighbour->get_current(chunk_size - 1, 0)) {
 							neighbours++;
 						}
 					}
@@ -306,43 +361,43 @@ private:
 
 				{//
 					if (do_up) {
-						if (get_at(x, y - 1)) {
+						if (get_current(x, y - 1)) {
 							neighbours++;
 						}
 					}
 					if (do_right) {
-						if (get_at(x + 1, y)) {
+						if (get_current(x + 1, y)) {
 							neighbours++;
 						}
 					}
 					if (do_bottom) {
-						if (get_at(x, y + 1)) {
+						if (get_current(x, y + 1)) {
 							neighbours++;
 						}
 					}
 					if (do_left) {
-						if (get_at(x - 1, y)) {
+						if (get_current(x - 1, y)) {
 							neighbours++;
 						}
 					}
 					//diagonal
 					if (do_up_left) {
-						if (get_at(x - 1, y - 1)) {
+						if (get_current(x - 1, y - 1)) {
 							neighbours++;
 						}
 					}
 					if (do_up_right) {
-						if (get_at(x + 1, y - 1)) {
+						if (get_current(x + 1, y - 1)) {
 							neighbours++;
 						}
 					}
 					if (do_bottom_right) {
-						if (get_at(x + 1, y + 1)) {
+						if (get_current(x + 1, y + 1)) {
 							neighbours++;
 						}
 					}
 					if (do_bottom_left) {
-						if (get_at(x - 1, y + 1)) {
+						if (get_current(x - 1, y + 1)) {
 							neighbours++;
 						}
 					}
@@ -355,29 +410,29 @@ private:
 		void check_point(int x, int y) {
 			int neighbours = 0;
 
-			if (get_at(x, y - 1)) {
+			if (get_current(x, y - 1)) {
 				neighbours++;
 			}
-			if (get_at(x + 1, y)) {
+			if (get_current(x + 1, y)) {
 				neighbours++;
 			}
-			if (get_at(x, y + 1)) {
+			if (get_current(x, y + 1)) {
 				neighbours++;
 			}
-			if (get_at(x - 1, y)) {
+			if (get_current(x - 1, y)) {
 				neighbours++;
 			}
 			//diagonal
-			if (get_at(x - 1, y - 1)) {
+			if (get_current(x - 1, y - 1)) {
 				neighbours++;
 			}
-			if (get_at(x + 1, y - 1)) {
+			if (get_current(x + 1, y - 1)) {
 				neighbours++;
 			}
-			if (get_at(x + 1, y + 1)) {
+			if (get_current(x + 1, y + 1)) {
 				neighbours++;
 			}
-			if (get_at(x - 1, y + 1)) {
+			if (get_current(x - 1, y + 1)) {
 				neighbours++;
 			}
 
@@ -394,6 +449,7 @@ private:
 					current_container[chunk_size * y + x] = next_container[chunk_size * y + x];
 				}
 			}
+			prepare_for_draw();
 		}
 		void tick_perform() {
 			//Special checks for chunk borders
@@ -440,10 +496,30 @@ private:
 			return 0;
 		}
 
+		void randomize_chunk() {
+			std::random_device rd;
+			std::mt19937 random_gen{ rd() };
+
+			for (size_t y = 0; y < chunk_size; y++)
+			{
+				for (size_t x = 0; x < chunk_size; x++)
+				{
+					if (random_gen() % 4 == 3) {
+						write_direct(x, y, true, true);
+					}
+				}
+			}
+			prepare_for_draw();
+		}
+
 		//should only be called by emplace_back in the below chunks list
 		Chunk(int x, int y, TheWorld& world) {
 			current_container = new bool[chunk_size * chunk_size] {0};
 			next_container = new bool[chunk_size * chunk_size] {0};
+
+			white_point = sf::Vertex(sf::Vector2f(0, 0), sf::Color::White);
+			triangles = sf::VertexArray(sf::Triangles);
+			points = sf::VertexArray(sf::Points);
 
 			this_world = &world;
 			position_x = x;
@@ -517,6 +593,9 @@ private:
 			delete[] current_container;
 			delete[] next_container;
 		}
+
+		//Chunk(Chunk& chunk) = delete;//no
+
 		/*
 		Chunk(Chunk& chunk)//*sigh
 		{
@@ -551,13 +630,17 @@ private:
 
 	std::list<Chunk> chunks;
 
+
 public:
-	size_t chunks_to_start_with = 1;
 	TheWorld();
 	void do_tick();
-	void draw(sf::RenderWindow& window);
+	void draw(sf::RenderWindow& window, double zoom);
 	void rebuild();
 	void toggle_show_chunks();
 	void set_dot(int x, int y, bool state);
+	int get_world_default_position();
+	void increment_rebuild_chunk_number();
+	void decrement_rebuild_chunk_number();
+	int get_rebuild_chunk_number();
 };
 

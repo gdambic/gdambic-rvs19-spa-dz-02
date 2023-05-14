@@ -4,28 +4,19 @@
 #include <random>
 #include <vector>
 #include <math.h>
+#include <algorithm>
+
+#include <thread>
 
 TheWorld::TheWorld()
 {
-	std::random_device rd;
-	random_gen = std::mt19937{ rd() };
-	//random_gen() % num
+	chunks.emplace_back(get_world_default_position() / chunk_size, get_world_default_position() / chunk_size, *this);
 
-	chunks.emplace_back(0, 0, *this);
-
-	for (size_t y = 0; y < chunk_size; y++)
-	{
-		for (size_t x = 0; x < chunk_size; x++)
-		{
-			if (random_gen() % 4 == 3) {
-				chunks.front().write_at(x, y, true);
-			}
-		}
-	}
+	chunks.front().randomize_chunk();
 
 	surround_rectangle.setFillColor(sf::Color(0,0,0,0));
 	surround_rectangle.setOutlineColor(sf::Color::Cyan);
-	surround_rectangle.setOutlineThickness(1);
+	surround_rectangle.setOutlineThickness(-1);
 	surround_rectangle.setSize(sf::Vector2f(chunk_size, chunk_size));
 }
 
@@ -37,9 +28,8 @@ void TheWorld::do_tick()
 
 	for (auto& chunk : chunks)
 	{
-		chunk.tick_prepare();
-		
-		if (chunk.has_things() && abs(chunk.get_position_x()) < INT_MAX - 1000 && abs(chunk.get_position_y()) < INT_MAX - 1000) {
+		if (chunk.has_things() && chunk.get_position_x() < 30000 / chunk_size && chunk.get_position_x() > 0 &&
+			chunk.get_position_y() < 30000 / chunk_size && chunk.get_position_y() > 0) {
 			int check = chunk.get_missing_neighbour();
 			while (check != 0) {
 				switch (check) {
@@ -59,12 +49,34 @@ void TheWorld::do_tick()
 				check = chunk.get_missing_neighbour();
 			}
 		}
+
 	}
+
+	std::vector<std::thread> thread_vec;
 
 	for (auto& chunk : chunks)
 	{
-		chunk.tick_perform();
+		//does all the calculations and saves them in a buffer to avoid overwrites
+		thread_vec.emplace_back(&TheWorld::Chunk::tick_perform, &chunk);
 	}
+
+	for (auto& thread : thread_vec)
+	{
+		thread.join();
+	}
+	thread_vec.clear();
+
+	for (auto& chunk : chunks)
+	{
+		//moves everything from the buffer into the current point array
+		thread_vec.emplace_back(&TheWorld::Chunk::tick_prepare, &chunk);
+	}
+
+	for (auto& thread : thread_vec)
+	{
+		thread.join();
+	}
+	thread_vec.clear();
 
 	for (auto it = chunks.begin(); it != chunks.end(); it++)
 	{
@@ -80,12 +92,13 @@ void TheWorld::do_tick()
 	}
 }
 
-void TheWorld::draw(sf::RenderWindow& window)
+//Zoom is used to determine if a performance optimization for drawing is needed
+void TheWorld::draw(sf::RenderWindow& window, double zoom)
 {
 
 	if (chunks.size() == 0)
 	{
-		std::cout << "Nothing left";
+		std::cout << "What?" << std::endl;
 		return;
 	}
 
@@ -96,59 +109,21 @@ void TheWorld::draw(sf::RenderWindow& window)
 			int pos_x = chunk.get_position_x() * chunk_size;
 			int pos_y = chunk.get_position_y() * chunk_size;
 			surround_rectangle.setPosition(pos_x, pos_y);
+			if (chunk.has_things()) {
+				surround_rectangle.setOutlineColor(sf::Color::Cyan);
+			}
+			else {
+				surround_rectangle.setOutlineColor(sf::Color::Blue);
+			}
 			window.draw(surround_rectangle);
 		}
 	}
 
-	//PERFORMANCE YEAHHHHH, TAKE THAT, RECTANGLES
-	//About 3 times faster than rectangle drawing, also cool grid effect
-	sf::VertexArray points(sf::Quads);
-	sf::Vertex point(sf::Vector2f(0, 0), sf::Color::White);
-
-	float spacing = 0.1;
-
-	//sf::Vector2f worldMin = window.mapPixelToCoords(sf::Vector2i(window.getPosition().x, window.getPosition().y));
-	sf::Vector2f worldMin = window.mapPixelToCoords(sf::Vector2i(0, 0));
-	//sf::Vector2f worldMax = window.mapPixelToCoords(sf::Vector2i(window.getPosition().x + window.getSize().x, window.getPosition().y + window.getSize().y));
-	sf::Vector2f worldMax = window.mapPixelToCoords(sf::Vector2i(window.getSize().x, window.getSize().y));
-
-	worldMin.x = floor(worldMin.x / chunk_size);
-	worldMin.y = floor(worldMin.y / chunk_size);
-	worldMax.x = ceil(worldMax.x / chunk_size);
-	worldMax.y = ceil(worldMax.y / chunk_size);
-
+	bool do_cheap_draw = (zoom >= 0.7);//can't even tell at that zoom, so it's fine!
 	for (auto& chunk : chunks)
 	{
-		if (!(chunk.get_position_x() >= worldMin.x && chunk.get_position_x() < worldMax.x && chunk.get_position_y() >= worldMin.y && chunk.get_position_y() < worldMax.y)) {
-			//std::cout << "World min: " << worldMin.x << ", " << worldMin.y << " | ";
-			//std::cout << "World max: " << worldMax.x << ", " << worldMax.y << std::endl;
-			continue;
-		}
-
-		int pos_x = chunk.get_position_x() * chunk_size;
-		int pos_y = chunk.get_position_y() * chunk_size;
-
-
-		for (int y = 0; y < chunk_size; y++)
-		{
-			for (int x = 0; x < chunk_size; x++)
-			{
-				if (chunk.get_at(x, y)) {
-					point.position = sf::Vector2f(pos_x + x + spacing, pos_y + y + spacing);
-					points.append(point);
-					point.position = sf::Vector2f(pos_x + x + 1 - spacing, pos_y + y + spacing);
-					points.append(point);
-					point.position = sf::Vector2f(pos_x + x + 1 - spacing, pos_y + y + 1 - spacing);
-					points.append(point);
-					point.position = sf::Vector2f(pos_x + x + spacing, pos_y + y + 1 - spacing);
-					points.append(point);
-					//default_rectangle.setPosition(pos_x + x, pos_y + y);
-				}
-			}
-		}
+		chunk.do_draw(window, do_cheap_draw);
 	}
-
-	window.draw(points);
 }
 
 void TheWorld::rebuild()
@@ -156,27 +131,30 @@ void TheWorld::rebuild()
 	while (!chunks.empty()) {
 		chunks.pop_back();
 	}
+
+	int startpos = get_world_default_position() / chunk_size;
 	
-	for (size_t y = 0; y < chunks_to_start_with; y++)
+	for (size_t y = startpos; y < startpos + num_of_rebuild_chunks; y++)
 	{
-		for (size_t x = 0; x < chunks_to_start_with; x++)
+		for (size_t x = startpos; x < startpos + num_of_rebuild_chunks; x++)
 		{
 			chunks.emplace_back(x, y, *this);
 		}
 	}
 
+	//Multithreading
+	std::vector<std::thread> thread_vec;
+
 	for (auto& chunk : chunks)
 	{
-		for (size_t y = 0; y < chunk_size; y++)
-		{
-			for (size_t x = 0; x < chunk_size; x++)
-			{
-				if (random_gen() % 4 == 3) {
-					chunk.write_at(x, y, true);
-				}
-			}
-		}
+		thread_vec.emplace_back(&TheWorld::Chunk::randomize_chunk, &chunk);
 	}
+
+	for (auto& thread : thread_vec)
+	{
+		thread.join();
+	}
+	thread_vec.clear();
 }
 
 void TheWorld::toggle_show_chunks()
@@ -215,4 +193,26 @@ void TheWorld::set_dot(int x, int y, bool state)
 
 	chunks.emplace_back(chunk_locate_x, chunk_locate_y, *this);
 	chunks.back().write_direct(x - chunk_locate_x * chunk_size, y - chunk_locate_y * chunk_size, state);
+}
+
+int TheWorld::get_world_default_position()
+{
+	return world_default_position;
+}
+
+void TheWorld::increment_rebuild_chunk_number()
+{
+	if (num_of_rebuild_chunks < INT_MAX - 1)
+		num_of_rebuild_chunks++;
+}
+
+void TheWorld::decrement_rebuild_chunk_number()
+{
+	if (num_of_rebuild_chunks > 0)
+		num_of_rebuild_chunks--;
+}
+
+int TheWorld::get_rebuild_chunk_number()
+{
+	return int(num_of_rebuild_chunks);
 }

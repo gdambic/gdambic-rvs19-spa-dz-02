@@ -15,17 +15,14 @@ int main()
 	//view.setViewport(sf::FloatRect(0.f, 0.f, window.getSize().x, window.getSize().y));
 	window.setView(view);
 
-	sf::CircleShape circle;
-	circle.setRadius(5);
-
-	//float default_view_center_x = view.getCenter().x;
-	//float default_view_center_y = view.getCenter().y;
-	float default_view_center_x = 50;
-	float default_view_center_y = 50;
-	float offset_x = 0;
-	float offset_y = 0;
-	//float zoom = 1;
-	float zoom = 0.5;
+	std::cout << "Welcome to Conway's Game of Life." << std::endl;
+	std::cout << "You can move using your mouse's ScrollWheel, and by holding Crtl or Shift and using the ScrollWheel." << std::endl;
+	std::cout << "You can place dots by LeftClicking or remove them by RightClicking." << std::endl;
+	std::cout << "You can use Left and Right arrows to control processing time. Space is used to pause the simulation." << std::endl;
+	std::cout << "Up and Down arrows control how many chunks regeneration will create. You can trigger it by pressing BackSpace." << std::endl;
+	std::cout << "You can press R to reset your view." << std::endl;
+	std::cout << "Hitting Enter will display chunk data." << std::endl;
+	std::cout << "Escape ends the program." << std::endl;
 
 	TheWorld world;
 	bool simulating = true;
@@ -35,13 +32,12 @@ int main()
 	int simulation_counter = 0;
 	int simulation_time = 120;
 
-	std::cout << "Welcome to Conway's Game of Life." << std::endl;
-	std::cout << "You can move using your mouse's ScrollWheel, and by holding Crtl or Shift and using the ScrollWheel." << std::endl;
-	std::cout << "You can place dots by LeftClicking or remove them by RightClicking." << std::endl;
-	std::cout << "You can use Left and Right arrows to control processing time. Space is used to pause the simulation." << std::endl;
-	std::cout << "Up and Down arrows control how many chunks regeneration will create. You can trigger it by pressing BackSpace." << std::endl;
-	std::cout << "Hitting Enter will display chunk data." << std::endl;
-	std::cout << "Escape ends the program." << std::endl;
+	float default_view_center_x = world.get_world_default_position() + 50;
+	float default_view_center_y = world.get_world_default_position() + 50;
+	float offset_x = 0;
+	float offset_y = 0;
+	//float zoom = 1;
+	double zoom = 0.5;
 
 	while (window.isOpen())
 	{
@@ -90,13 +86,13 @@ int main()
 				//Build order
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
 					key_cooldown = standard_key_cooldown;
-					world.chunks_to_start_with++;
-					std::cout << "UP pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
+					world.increment_rebuild_chunk_number();
+					std::cout << "UP pressed. Number of starting chunks is " << world.get_rebuild_chunk_number() << '.' << std::endl;
 				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
 					key_cooldown = standard_key_cooldown;
-					world.chunks_to_start_with--;
-					std::cout << "DOWN pressed. Number of starting chunks is " << world.chunks_to_start_with << '.' << std::endl;
+					world.decrement_rebuild_chunk_number();
+					std::cout << "DOWN pressed. Number of starting chunks is " << world.get_rebuild_chunk_number() << '.' << std::endl;
 				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Backspace)) {
 					key_cooldown = standard_key_cooldown;
@@ -122,6 +118,14 @@ int main()
 					std::cout << "SPACE pressed. Pause toggled." << std::endl;
 				}
 
+				//View reset
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+					key_cooldown = standard_key_cooldown;
+					std::cout << "R pressed. Resetting view." << std::endl;
+					offset_x = 0;
+					offset_y = 0;
+					zoom = 1;
+				}
 
 				//Chunk control
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter)) {
@@ -197,7 +201,7 @@ int main()
 		circle.setPosition(150, 150);
 		window.draw(circle);*/
 
-		world.draw(window);
+		world.draw(window, zoom);
 
 		window.display();
 	}
