@@ -1,1 +1,1 @@
-# 2nd homework assignement from DSA (CRO. SPA)
+# gdambic-rvs19-spa-dz-02
