@@ -11,16 +11,17 @@
 #include <exception>
 
 /*
-This world will consist of chunks. Each chunk has 10000 points (100*100). Each chunk has a location expressed in intXY. Things bigger than max int are discarded.
-When a new chunk is made it contacts its neighbours and sets itself as their neighbour, so they can contact it when dealing with edge pixels.
+This world will consist of chunks. Each chunk has 10000 points (100*100) by default. Each chunk has a location expressed in intXY. Things bigger than ~30000 are discarded
+due to floating point discrepanices. When a new chunk is made it contacts its neighbours and sets itself as their neighbour, so they can contact it when dealing with edge
+pixels.
 */
 
-//Chunks could be multithreaded.
+//Chunk processing is multithreaded in TheWorld.cpp
 
 class TheWorld
 {
 private:
-	//grandfather clock tick tock
+	//grandfather clock tick tock?
 //	sf::SoundBuffer tick_buffer;
 //	sf::Sound tick;
 //	sf::SoundBuffer tock_buffer;
@@ -37,7 +38,9 @@ private:
 	sf::RectangleShape surround_rectangle;
 
 	static const int chunk_size = 100;//100 default
-	static const int world_default_position = 15000;//100 default
+	static const int world_default_position = 15000;//15000 default
+	static const int world_min_position = 0;//0 default
+	static const int world_max_position = 30000;//30000 default
 
 	//This was a horrible idea. I regret everything.
 	struct Chunk {
@@ -512,8 +515,40 @@ private:
 			prepare_for_draw();
 		}
 
+		//Assumes the image starts at 0,0
+		void get_from_image(sf::Image& img) {
+			int image_size_x = img.getSize().x;
+			int image_size_y = img.getSize().y;
+			
+			int relative_chunk_pos_x = get_position_x() * chunk_size - this_world->get_world_default_position();
+			int relative_chunk_pos_y = get_position_y() * chunk_size - this_world->get_world_default_position();
+
+			int limit_x = 100;
+			int limit_y = 100;
+
+			if (relative_chunk_pos_x + chunk_size - image_size_x > 0) {
+				limit_x -= relative_chunk_pos_x + chunk_size - image_size_x;
+			}
+			if (relative_chunk_pos_y + chunk_size - image_size_y > 0) {
+				limit_y -= relative_chunk_pos_y + chunk_size - image_size_y;
+			}
+
+			for (int y = relative_chunk_pos_y; y < relative_chunk_pos_y + limit_y; y++)
+			{
+				for (int x = relative_chunk_pos_x; x < relative_chunk_pos_x + limit_x; x++)
+				{
+					if (img.getPixel(x, y).r > 100 || img.getPixel(x, y).g > 100 || img.getPixel(x, y).b > 100)
+					{
+						write_direct(x - relative_chunk_pos_x, y - relative_chunk_pos_y, true, true);
+					}
+				}
+			}
+			prepare_for_draw();
+		}
+
 		//should only be called by emplace_back in the below chunks list
 		Chunk(int x, int y, TheWorld& world) {
+
 			current_container = new bool[chunk_size * chunk_size] {0};
 			next_container = new bool[chunk_size * chunk_size] {0};
 
@@ -642,5 +677,6 @@ public:
 	void increment_rebuild_chunk_number();
 	void decrement_rebuild_chunk_number();
 	int get_rebuild_chunk_number();
+	void load_info_screen();
 };
 

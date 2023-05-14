@@ -7,7 +7,10 @@
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 600), "1-Player Conway's Game of Life");
+	int win_size_x = sf::VideoMode::getDesktopMode().width / 2;
+	int win_size_y = sf::VideoMode::getDesktopMode().height / 2;
+
+	sf::RenderWindow window(sf::VideoMode(win_size_x, win_size_y), "1-Player Conway's Game of Life");
 	window.setFramerateLimit(60);
 
 	sf::View view;
@@ -16,16 +19,16 @@ int main()
 	window.setView(view);
 
 	std::cout << "Welcome to Conway's Game of Life." << std::endl;
-	std::cout << "You can move using your mouse's ScrollWheel, and by holding Crtl or Shift and using the ScrollWheel." << std::endl;
+	std::cout << "You can move using just your mouse's ScrollWheel, or by holding Crtl or Shift and using the ScrollWheel." << std::endl;
 	std::cout << "You can place dots by LeftClicking or remove them by RightClicking." << std::endl;
-	std::cout << "You can use Left and Right arrows to control processing time. Space is used to pause the simulation." << std::endl;
+	std::cout << "You can press R to reset your view, and M to load the info screen." << std::endl;
+	std::cout << "You can use Left and Right arrows to control processing time. Space is used to pause/unpause the simulation." << std::endl;
 	std::cout << "Up and Down arrows control how many chunks regeneration will create. You can trigger it by pressing BackSpace." << std::endl;
-	std::cout << "You can press R to reset your view." << std::endl;
 	std::cout << "Hitting Enter will display chunk data." << std::endl;
 	std::cout << "Escape ends the program." << std::endl;
 
 	TheWorld world;
-	bool simulating = true;
+	bool simulating = false;
 	int key_cooldown = 0;
 	int standard_key_cooldown = 10;
 
@@ -34,10 +37,11 @@ int main()
 
 	float default_view_center_x = world.get_world_default_position() + 50;
 	float default_view_center_y = world.get_world_default_position() + 50;
-	float offset_x = 0;
-	float offset_y = 0;
+	float offset_x = 950;
+	float offset_y = 500;
 	//float zoom = 1;
-	double zoom = 0.5;
+	double zoom = 2.4 / (window.getSize().x / 960.f);
+	std::cout << zoom << std::endl;
 
 	while (window.isOpen())
 	{
@@ -125,6 +129,12 @@ int main()
 					offset_x = 0;
 					offset_y = 0;
 					zoom = 1;
+				}
+				//Load main menu
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::M)) {
+					key_cooldown = standard_key_cooldown;
+					std::cout << "M pressed. Loading intro screen." << std::endl;
+					world.load_info_screen();
 				}
 
 				//Chunk control

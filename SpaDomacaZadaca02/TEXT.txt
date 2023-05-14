@@ -1,0 +1,10 @@
+Welcome to Conway's Game of Life.
+You can move using just your mouse's ScrollWheel, or by holding Crtl or Shift and using the ScrollWheel.
+You can place dots by LeftClicking or remove them by RightClicking.
+You can press R to reset your view, and M to load the info screen.
+You can use Left and Right arrows to control processing time. Space is used to pause/unpause the simulation.
+Up and Down arrows control how many chunks regeneration will create. You can trigger it by pressing BackSpace.
+Hitting Enter will display chunk data.
+Escape ends the program.
+
+Tap space to begin.

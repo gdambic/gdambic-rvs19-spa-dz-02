@@ -10,14 +10,12 @@
 
 TheWorld::TheWorld()
 {
-	chunks.emplace_back(get_world_default_position() / chunk_size, get_world_default_position() / chunk_size, *this);
-
-	chunks.front().randomize_chunk();
-
-	surround_rectangle.setFillColor(sf::Color(0,0,0,0));
+	surround_rectangle.setFillColor(sf::Color(0, 0, 0, 0));
 	surround_rectangle.setOutlineColor(sf::Color::Cyan);
 	surround_rectangle.setOutlineThickness(-1);
 	surround_rectangle.setSize(sf::Vector2f(chunk_size, chunk_size));
+
+	load_info_screen();
 }
 
 void TheWorld::do_tick()
@@ -167,6 +165,7 @@ void TheWorld::set_dot(int x, int y, bool state)
 	int chunk_locate_x = x;
 	int chunk_locate_y = y;
 
+	//Somehow I broke things drawing at negative values so this is no longer relevant, but oh well
 	if (chunk_locate_x < 0) {
 		//x -= 1;
 		chunk_locate_x -= chunk_size;
@@ -179,10 +178,6 @@ void TheWorld::set_dot(int x, int y, bool state)
 	chunk_locate_x /= chunk_size;
 	chunk_locate_y /= chunk_size;
 
-	std::cout << "START" << chunk_locate_x << ", " << chunk_locate_y << std::endl;
-	
-	std::cout << chunk_locate_x << ", " << chunk_locate_y << std::endl;
-
 	for (auto& chunk : chunks)
 	{
 		if (chunk.get_position_x() == chunk_locate_x && chunk.get_position_y() == chunk_locate_y) {
@@ -191,8 +186,10 @@ void TheWorld::set_dot(int x, int y, bool state)
 		}
 	}
 
-	chunks.emplace_back(chunk_locate_x, chunk_locate_y, *this);
-	chunks.back().write_direct(x - chunk_locate_x * chunk_size, y - chunk_locate_y * chunk_size, state);
+	if (state) {
+		chunks.emplace_back(chunk_locate_x, chunk_locate_y, *this);
+		chunks.back().write_direct(x - chunk_locate_x * chunk_size, y - chunk_locate_y * chunk_size, state);
+	}
 }
 
 int TheWorld::get_world_default_position()
@@ -215,4 +212,42 @@ void TheWorld::decrement_rebuild_chunk_number()
 int TheWorld::get_rebuild_chunk_number()
 {
 	return int(num_of_rebuild_chunks);
+}
+
+void TheWorld::load_info_screen()
+{
+	chunks.clear();
+
+	sf::Image img;
+	if (!img.loadFromFile("ConwayINSTR.png")) {
+		std::cout << "Image load failed, generating normally.";
+		rebuild();
+	}
+	else {
+		int size_x = ceil(img.getSize().x / double(chunk_size));
+		int size_y = ceil(img.getSize().y / double(chunk_size));
+
+		for (int x = 0; x < size_x; x++)
+		{
+			for (int y = 0; y < size_y; y++)
+			{
+				chunks.emplace_back(get_world_default_position() / chunk_size + x, get_world_default_position() / chunk_size + y, *this);
+			}
+
+		}
+
+		std::vector<std::thread> thread_vec;
+
+		for (auto& chunk : chunks)
+		{
+			//does all the calculations and saves them in a buffer to avoid overwrites
+			thread_vec.emplace_back(&TheWorld::Chunk::get_from_image, &chunk, std::ref(img));
+		}
+
+		for (auto& thread : thread_vec)
+		{
+			thread.join();
+		}
+		thread_vec.clear();
+	}
 }
