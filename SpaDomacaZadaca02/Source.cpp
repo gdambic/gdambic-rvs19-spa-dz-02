@@ -34,7 +34,7 @@ int main()
     text3.setCharacterSize(24);
     text3.setFont(font);
     text3.setFillColor(sf::Color::White);
-    text3.setString("> Angel : Okay.. okay, I can do this... don't fuck up... I need this job.");
+    text3.setString("> Angel : Okay.. okay, I can do this... don't fu*k up... I need this job.");
     text3.setPosition(50, 300);
 
     sf::Text text4;
@@ -164,7 +164,7 @@ int main()
 		d.watch_gol();
 
         d.cat_falling(50, 90);
-        d.write_text_to_screen("> Oh boy, it's Atlantida all over again...", 200, 100, 91, 100);
+        d.write_text_to_screen("> Oh boy, it's Atlantis all over again...", 200, 100, 91, 100);
         d.curious_streach(150, 180);
         d.boom(220, 260);
         d.write_text_to_screen("> FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", 200, 100, 261, 270);
